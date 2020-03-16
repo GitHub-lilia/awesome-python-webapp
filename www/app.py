@@ -43,6 +43,8 @@ async def response_factory(app,handler):
     async def response(request):
         logging.info('response handler..')
         r = await handler(request)
+        if isinstance(r, web.StreamResponse):
+            return r
         if isinstance(r,bytes):
             resp = web.Response(body=r)
             resp.content_type = 'application/octet-stream'
