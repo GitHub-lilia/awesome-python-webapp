@@ -13,7 +13,7 @@ def get(path):
         def wrapper(*args,**kw):
             return func(*args,**kw)
         wrapper.__method__ = 'GET'
-        wrapper.__path__ = path
+        wrapper.__route__ = path
         return wrapper
     return decorator
 
@@ -39,7 +39,7 @@ def has_request_arg(fn):
         # request参数是最后一个必传参数？？
         if found and (param.kind != inspect.Parameter.VAR_POSITIONAL and param.kind != inspect.Parameter.KEYWORD_ONLY and param.kind != inspect.Parameter.VAR_KEYWORD):
             raise ValueError('request parameter must be the last named parameter in function: %s%s' % (fn.__name__, str(sig)))
-        return found
+    return found
 
 # 判断是否有关键字参数
 def has_var_kw_arg(fn):
@@ -160,12 +160,12 @@ def add_routes(app,module_name):
         # 取最后一级module
         name = module_name[n+1:]
         mod = getattr(__import__(module_name[:n],globals(),locals(),[name]),name)
-        for attr in dir(mod):
-            if attr.startswith('_'):
-                continue
-            fn = getattr(mod,attr)
-            if callable(fn):
-                method = getattr(fn,'__method__',None)
-                path = getattr(fn,'__route__',None)
-                if method and path:
-                    add_route(app,fn)
+    for attr in dir(mod):
+        if attr.startswith('_'):
+            continue
+        fn = getattr(mod,attr)
+        if callable(fn):
+            method = getattr(fn,'__method__',None)
+            path = getattr(fn,'__route__',None)
+            if method and path:
+                add_route(app,fn)
