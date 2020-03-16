@@ -6,7 +6,7 @@ __author__ = 'ylyang'
 ' url handlers '
 
 from coroweb import get
-from models import Blog
+from models import Blog,User
 
 import time
 
@@ -22,4 +22,11 @@ async def index(request):
         '__template__' : 'blogs.html',
         'blogs' : blogs
     }
+
+@get('/api/users')
+async def api_get_users():
+    users = await User.findAll(orderBy='created_at desc')
+    for u in users:
+        u.passwd = '******'
+    return dict(users=users)
 
