@@ -2,10 +2,12 @@ import orm,asyncio
 from aiohttp import web
 from models import User, Blog, Comment
 
-async def test(loop):
-    await orm.create_pool(loop,user='www-data', password='www-data', db='awesome')
+from config import configs
 
-    u = User(name='Test', email='test@example.com', passwd='1234567890', image='about:blank')
+async def test(loop):
+    await orm.create_pool(loop,**configs.db)
+
+    u = User(name='Test', email='test1@example.com', passwd='1234567890', image='about:blank')
 
     await u.save()
     
