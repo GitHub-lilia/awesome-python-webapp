@@ -7,7 +7,7 @@ __author__ = 'ylyang'
 
 from coroweb import get,post
 from models import User,Blog,next_id
-from apis import APIError,APIValueError,APIResourceNotFoundError
+from apis import APIError,APIValueError,APIResourceNotFoundError,APIPermissionError
 from aiohttp import web
 from config import configs
 
@@ -49,6 +49,10 @@ async def cookie2user(cookie_str):
         logging.exception(e)
         return None
 
+def check_admin(request):
+    if request.__user__ is None or not request.__user__.admin:
+        raise APIPermissionError()
+
 @get('/')
 async def index(request):
     summary = 'Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.'
@@ -72,6 +76,14 @@ async def register():
 async def signin():
     return{
         '__template__' : 'signin.html'
+    }
+
+@get('/manage/blogs/create')
+async def manage_create_blog():
+    return {
+        '__template__' : 'manage_blog_edit.html',
+        'id' : '',
+        'action' : '/api/blogs'
     }
 
 @get('/api/users')
@@ -131,3 +143,23 @@ async def authenticate(*,email,passwd):
     r.content_type = 'application/json'
     r.body = json.dumps(user,ensure_ascii=False).encode('utf-8')
     return r
+
+@get('/api/blogs/{id}')
+async def api_get_blog(*,id):
+    blog = await Blog.find(id)
+    return blog
+
+@post('/api/blogs')
+async def api_create_blog(request,*,name,summary,content):
+    check_admin(request)
+    if not name or not name.strip():
+        raise APIValueError('name','name cannot be empty')
+    if not summary or not summary.strip():
+        raise APIValueError('summary','summary cannot be empty')
+    if not content or not content.strip():
+        raise APIValueError('content','content cannot be empty')
+
+    blog = Blog(user_id=request.__user__.id,user_name=request.__user__.name,user_image=request.__user__.image,name=name.strip(),summary=summary.strip(),content=content.strip())
+    await blog.save()
+    return blog
+
