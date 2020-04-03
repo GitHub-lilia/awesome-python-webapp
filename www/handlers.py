@@ -7,7 +7,7 @@ __author__ = 'ylyang'
 
 from coroweb import get,post
 from models import User,Blog,next_id
-from apis import APIError,APIValueError,APIResourceNotFoundError,APIPermissionError
+from apis import APIError,APIValueError,APIResourceNotFoundError,APIPermissionError,Page
 from aiohttp import web
 from config import configs
 
@@ -52,6 +52,16 @@ async def cookie2user(cookie_str):
 def check_admin(request):
     if request.__user__ is None or not request.__user__.admin:
         raise APIPermissionError()
+
+def get_page_index(page_str):
+    p = 1
+    try:
+        p = int(page_str)
+    except ValueError as e:
+        pass
+    if p<1:
+        p = 1
+    return p
 
 @get('/')
 async def index(request):
@@ -162,4 +172,21 @@ async def api_create_blog(request,*,name,summary,content):
     blog = Blog(user_id=request.__user__.id,user_name=request.__user__.name,user_image=request.__user__.image,name=name.strip(),summary=summary.strip(),content=content.strip())
     await blog.save()
     return blog
+
+@get('/manage/blogs')
+async def manage_blogs(*,page='1'):
+    return {
+        '__template__':'manage_blogs.html',
+        'page_index':get_page_index(page)
+    }
+
+@get('/api/blogs')
+async def api_blogs(*,page='1'):
+    page_index = get_page_index(page)
+    num = await Blog.findNumber('count(id)')
+    p = Page(num,page_index)
+    if num == 0:
+        return dict(page=p,blogs=())
+    blogs = await Blog.findAll(orderBy='created_at desc',limit=(p.offset,p.limit))
+    return dict(page=p,blogs=blogs)
 
