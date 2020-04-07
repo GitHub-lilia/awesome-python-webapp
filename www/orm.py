@@ -196,6 +196,10 @@ class Model(dict,metaclass=ModelMetaclass):
         if len(rs) == 0:
             return None
         return cls(**rs[0])
+        rs = await select('%s where `%s`=?' % (cls.__select__, cls.__primary_key__), [pk], 1)
+        if len(rs) == 0:
+            return None
+        return cls(**rs[0])
 
     async def save(self):
         args = list(map(self.getValueOrDefault,self.__fields__))

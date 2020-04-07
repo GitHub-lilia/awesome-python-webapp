@@ -104,7 +104,7 @@ def datetime_filter(t):
     if delta < 604800:
         return u'%s天前' % (delta // 86400)
     dt = datetime.fromtimestamp(t)
-    return u'%s年%月%s日' % (dt.year,dt.month,dt.day)
+    return u'%s年%s月%s日' % (dt.year,dt.month,dt.day)
 
 async def init(loop):
     await orm.create_pool(loop=loop,**configs.db)
